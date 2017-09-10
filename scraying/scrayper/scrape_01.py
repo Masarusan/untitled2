@@ -15,8 +15,18 @@ class Scrape:
         self.__list_img = list_img
     #スクレイピングメソッド
 
+    #httpの入力判定
+    def http_ok(self):
+        url = self.get_url()
+        p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
+        if p.match(url):
+            print('HTTP_PATTERN_OK')
+            print('URL:'.format(self.get_url()))
+        else:
+            print('Error')
+
     def scrape(self):
-        #self.set_url(url)
+        self.http_ok()
         http = requests.get(self.get_url(), timeout=1)
         if http.status_code != requests.codes.ok:
             print('Error')
@@ -26,14 +36,13 @@ class Scrape:
         print('Accesetime:{}'.format(http.elapsed.total_seconds()))
         self.set_soup(BeautifulSoup(http.content, 'html.parser'))
 
-        self.__list = [[a] for a in self.get_soup().find_all(['img','src'])]
+        self.__list = [[a] for a in self.get_soup().find_all(['img', 'src'])]
             #print(i, ':', a.get('src'), a.text)
 
-        for link in self.get_soup().find_all('img'):
-            self.__list_img = [link.get('src')]
-            print(self.__list_img)
+
 
         print(type(self.__list))
+
     #画像ダウンロード
     def downloading(self, url, timeout=10):
         response = requests.get(url, allow_redirects=False, timeout=timeout)
@@ -58,12 +67,19 @@ class Scrape:
     def scrape_img(self):
         pass
 
-    #タグ'src'を格納
-    def get_list_img(self):
-        return self.__list_img
+    #画像リンクを取得
+    def get_link(self):
+        return self.__link
 
-    def set_list_img(self, list_img):
-        self.__list_img = list_img
+    #取得した画像リンクを格納
+    def set_link(self, link):
+        self.__link = link
+
+    #soupからタグimg,srcを抽出
+    def list_img(self):
+        for links in self.get_soup().find_all('img'):
+            self.set_link([links.get('src')])
+            print(self.__link)
 
     def scrape_console(self, soup):
         pass
@@ -74,16 +90,10 @@ class Scrape:
     def set_url(self, url):
         self.__url = url
 
-    #リストに格納したデータの取り出し
-    def pop(self):
-                #リンクを取得
-        for a in self.__list:
-            print('{}'.format(a.get('src')))
-        #print(a.get('src'))
-
     #リストのgetter
     def get_list(self):
         return self.__list
+
     #リストのsetter
     def set_list(self):
         self.__list = list
