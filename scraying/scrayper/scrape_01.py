@@ -86,7 +86,6 @@ class Scrape:
             for i, line in enumerate(f):
                 print("{:4d}:{}".format(i + 1, line.strip("\n")))
 
-
     #画像ファイル名を決定
     def save_filename(self):
         pass
@@ -146,5 +145,3 @@ class Scrape:
     #file
     def set_file(self, file):
         self.__file = file
-
-
