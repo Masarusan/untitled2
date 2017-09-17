@@ -2,9 +2,11 @@
 #スクレイピングimg & src
 import requests
 from bs4 import BeautifulSoup
+from chardet.universaldetector import UniversalDetector
 import re
-import os
-
+import sys
+import time
+import os.path
 
 class Scrape:
     #初期化
@@ -13,33 +15,45 @@ class Scrape:
         self.__url = url
         self.__soup = soup
         self.__list_img = list_img
-    #スクレイピングメソッド
+        self.http_ok()
+
 
     #httpの入力判定
     def http_ok(self):
         url = self.get_url()
-        p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
+        p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')#http正規表現
+        root, ext = os.path.splitext(self.get_url())
         if p.match(url):
             print('HTTP_PATTERN_OK')
-            print('URL:'.format(self.get_url()))
+            print('URL:{}'.format(self.get_url()))
+        elif ext == ".html":
+            print("ローカルディレクトリからファイルを取得")
+            try:
+                self.file_open(self.get_url())
+                raise FileNotFoundError('TestError')
+            except FileNotFoundError as a:
+                print("ファイルが見つかりませんでした")
+                print("FileNotFound:{0}".format(a))
+                raise
         else:
             print('Error')
+            sys.exit()
 
+    # スクレイピングメソッド
     def scrape(self):
-        self.http_ok()
+        #http = session.get(self.get_url(), timeout=1)
         http = requests.get(self.get_url(), timeout=1)
         if http.status_code != requests.codes.ok:
             print('Error')
-            exit(1)
+            print(http.status_code)
+            sys.exit(1)
         print('HTTP_STATUS_CODE:{}'.format(http.status_code))
         print('Encoding:{}'.format(http.encoding))
         print('Accesetime:{}'.format(http.elapsed.total_seconds()))
         self.set_soup(BeautifulSoup(http.content, 'html.parser'))
-
+        print('BS4_Original_encoding:{}'.format(self.get_soup().original_encoding))
         self.__list = [[a] for a in self.get_soup().find_all(['img', 'src'])]
             #print(i, ':', a.get('src'), a.text)
-
-
 
         print(type(self.__list))
 
@@ -54,6 +68,24 @@ class Scrape:
             e = Exception("Content-Type:" + content_type)
             raise e
         return response.content
+    @staticmethod
+    def encode_decision(self, soup):
+        detector = UniversalDetector()
+        for line in soup:
+            detector.feed(line)
+            if detector.done:
+                break
+
+            detector.close()
+            print(detector.result)
+        return
+
+    #ファイルをオープン
+    def file_open(self, open_files):
+        with open(open_files, "r", encoding="utf-8")as f:
+            for i, line in enumerate(f):
+                print("{:4d}:{}".format(i + 1, line.strip("\n")))
+
 
     #画像ファイル名を決定
     def save_filename(self):
@@ -76,8 +108,9 @@ class Scrape:
         self.__link = link
 
     #soupからタグimg,srcを抽出
-    def list_img(self):
+    def list_img(self, open_files):
         for links in self.get_soup().find_all('img'):
+            time.sleep(1) #１秒ウェイトを挟む
             self.set_link([links.get('src')])
             print(self.__link)
 
@@ -105,5 +138,13 @@ class Scrape:
 
     def set_soup(self, soup):
         self.__soup = soup
+
+    #file
+    def get_file(self):
+        return self.__file
+
+    #file
+    def set_file(self, file):
+        self.__file = file
 
 
