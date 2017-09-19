@@ -23,18 +23,18 @@ class Scrape:
         url = self.get_url()
         p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')#http正規表現
         root, ext = os.path.splitext(self.get_url())
-        if p.match(url):
+        if p.match(url):#httpの場合実行
             print('HTTP_PATTERN_OK')
             print('URL:{}'.format(self.get_url()))
         elif ext == ".html":
             print("ローカルディレクトリからファイルを取得")
             try:
                 self.file_open(self.get_url())
-                raise FileNotFoundError('TestError')
+                #raise FileNotFoundError('TestError')
             except FileNotFoundError as a:
                 print("ファイルが見つかりませんでした")
                 print("FileNotFound:{0}".format(a))
-                raise
+                #raise
         else:
             print('Error')
             sys.exit()
@@ -113,12 +113,12 @@ class Scrape:
             self.set_link([links.get('src')])
             print(self.__link)
 
-    def scrape_console(self, soup):
-        pass
-
+    #後々List型にしよう
+    #URL保持
     def get_url(self):
         return self.__url
 
+    #URL保持
     def set_url(self, url):
         self.__url = url
 
