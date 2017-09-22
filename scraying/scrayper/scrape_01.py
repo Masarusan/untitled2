@@ -8,6 +8,7 @@ import sys
 import time
 import os.path
 
+
 class Scrape:
     #初期化
     def __init__(self, list=[[]], url='', soup='', list_img=[[]]):
@@ -15,17 +16,18 @@ class Scrape:
         self.__url = url
         self.__soup = soup
         self.__list_img = list_img
-        self.http_ok()
+        self.http_ok(self.__url)
 
 
     #httpの入力判定
-    def http_ok(self):
-        url = self.get_url()
+    def http_ok(self, url):
+        #url = self.get_url()
         p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')#http正規表現
-        root, ext = os.path.splitext(self.get_url())
+        root, ext = os.path.splitext(url)
         if p.match(url):#httpの場合実行
             print('HTTP_PATTERN_OK')
             print('URL:{}'.format(self.get_url()))
+            return self.scrape(url)
         elif ext == ".html":
             print("ローカルディレクトリからファイルを取得")
             try:
@@ -40,22 +42,41 @@ class Scrape:
             sys.exit()
 
     # スクレイピングメソッド
-    def scrape(self):
+    def scrape(self, url):
         #http = session.get(self.get_url(), timeout=1)
-        http = requests.get(self.get_url(), timeout=1)
-        if http.status_code != requests.codes.ok:
-            print('Error')
-            print(http.status_code)
-            sys.exit(1)
-        print('HTTP_STATUS_CODE:{}'.format(http.status_code))
-        print('Encoding:{}'.format(http.encoding))
-        print('Accesetime:{}'.format(http.elapsed.total_seconds()))
-        self.set_soup(BeautifulSoup(http.content, 'html.parser'))
-        print('BS4_Original_encoding:{}'.format(self.get_soup().original_encoding))
-        self.__list = [[a] for a in self.get_soup().find_all(['img', 'src'])]
-            #print(i, ':', a.get('src'), a.text)
+        max_retries = 3
+        retries = 0
+        while True:
+            try:
+                http = requests.get(url, timeout=1)
+                if http.status_code != requests.codes.ok:
+                    print('Error')
+                    print(http.status_code)
+                    sys.exit(1)
+                else:
+                    print('Success!')
 
-        print(type(self.__list))
+                    print('HTTP_STATUS_CODE:{}'.format(http.status_code))
+                    print('Encoding:{}'.format(http.encoding))
+                    print('Accesetime:{}'.format(http.elapsed.total_seconds()))
+                    self.set_soup(BeautifulSoup(http.content, 'html.parser'))
+                    print('BS4_Original_encoding:{}'.format(self.get_soup().original_encoding))
+                    self.__list = [[a] for a in self.get_soup().find_all(['img', 'src'])]
+                        #print(i, ':', a.get('src'), a.text)
+
+                    print(type(self.__list))
+                    return self.list_img()
+            except requests.exceptions.RequestException as ex:
+                #ネットワークレベルのエラー
+                print('Exception occured:{0}'.format(ex))
+            retries+=1
+            if retries >= max_retries:
+                raise Exception('Too many retries.')#リトライ回数の上限を超えた時例外発生
+
+            wait = 2**(retries-1)
+            print('Waiting{0}seconds...'.format(wait))
+            time.sleep(wait)#ウェイト
+
 
     #画像ダウンロード
     def downloading(self, url, timeout=10):
@@ -107,7 +128,7 @@ class Scrape:
         self.__link = link
 
     #soupからタグimg,srcを抽出
-    def list_img(self, open_files):
+    def list_img(self):
         for links in self.get_soup().find_all('img'):
             time.sleep(1) #１秒ウェイトを挟む
             self.set_link([links.get('src')])
