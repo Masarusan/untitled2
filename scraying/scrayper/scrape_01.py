@@ -7,15 +7,17 @@ import re
 import sys
 import time
 import os.path
+import glob
+from filecmp import cmp
 
 
 class Scrape:
     #初期化
-    def __init__(self, list=[[]], url='', soup='', list_img=[[]]):
+    def __init__(self, list=[[]], url='', soup='', response=""):
         self.__list = list
         self.__url = url
         self.__soup = soup
-        self.__list_img = list_img
+        self.__response = response
         self.http_ok(self.__url)
 
 
@@ -37,6 +39,9 @@ class Scrape:
                 print("ファイルが見つかりませんでした")
                 print("FileNotFound:{0}".format(a))
                 #raise
+        elif ext == ".csv":
+            pass
+
         else:
             print('Error')
             sys.exit()
@@ -46,26 +51,27 @@ class Scrape:
         #http = session.get(self.get_url(), timeout=1)
         max_retries = 3
         retries = 0
+        std = ''
         while True:
             try:
-                http = requests.get(url, timeout=1)
-                if http.status_code != requests.codes.ok:
-                    print('Error')
-                    print(http.status_code)
-                    sys.exit(1)
+                s = requests.Session()
+                self.set_response(s.get(url, timeout=5))
+                if self.get_response().status_code != requests.codes.ok:
+                    sys.stdout.write('Error:')
+                    sys.stdout.write('Status_Code:{}'.format(self.get_response().status_code))
                 else:
                     print('Success!')
-
-                    print('HTTP_STATUS_CODE:{}'.format(http.status_code))
-                    print('Encoding:{}'.format(http.encoding))
-                    print('Accesetime:{}'.format(http.elapsed.total_seconds()))
-                    self.set_soup(BeautifulSoup(http.content, 'html.parser'))
+                    print('HTTP_STATUS_CODE:{}'.format(self.get_response().status_code))
+                    print('Encoding:{}'.format(self.get_response().encoding))
+                    print('Accesetime:{}'.format(self.get_response().elapsed.total_seconds()))
+                    self.set_soup(BeautifulSoup(self.get_response().content, 'html.parser'))
                     print('BS4_Original_encoding:{}'.format(self.get_soup().original_encoding))
                     self.__list = [[a] for a in self.get_soup().find_all(['img', 'src'])]
-                        #print(i, ':', a.get('src'), a.text)
 
-                    print(type(self.__list))
-                    return self.list_img()
+                        #print(i, ':', a.get('src'), a.text)
+                    return self.list_url()
+
+
             except requests.exceptions.RequestException as ex:
                 #ネットワークレベルのエラー
                 print('Exception occured:{0}'.format(ex))
@@ -74,21 +80,11 @@ class Scrape:
                 raise Exception('Too many retries.')#リトライ回数の上限を超えた時例外発生
 
             wait = 2**(retries-1)
-            print('Waiting{0}seconds...'.format(wait))
+            std += '.'
+            sys.stdout.write('\rReConeccting %d seconds%s' % (wait,std))
+            sys.stdout.flush()
             time.sleep(wait)#ウェイト
 
-
-    #画像ダウンロード
-    def downloading(self, url, timeout=10):
-        response = requests.get(url, allow_redirects=False, timeout=timeout)
-        if response.status_code != 200:
-         e = Exception("HTTP status:" + response.status_code)
-         raise e
-        content_type = response.headers["content-type"]
-        if 'image' not in content_type:
-            e = Exception("Content-Type:" + content_type)
-            raise e
-        return response.content
     @staticmethod
     def encode_decision(self, soup):
         detector = UniversalDetector()
@@ -112,8 +108,9 @@ class Scrape:
         pass
 
     #画像をファイルに保存
-    def save_image(self):
-        pass
+    def save_image(self, image, filename):
+        with open(filename, 'wb')as f:
+            f.write(image.encode('utf-8'))
 
     #urlアクセスのみを取得する
     def scrape_img(self):
@@ -126,13 +123,50 @@ class Scrape:
     #取得した画像リンクを格納
     def set_link(self, link):
         self.__link = link
-
-    #soupからタグimg,srcを抽出
-    def list_img(self):
+    #
+    # #soupからタグimg,srcを抽出
+    # def list_img(self):
+    #     self.__link = [[]]
+    #     for links in self.get_soup().find_all('img'):
+    #         #time.sleep(1) #１秒ウェイトを挟む
+    #         self.__link = [links.get('src')]
+    #         print(self.__link)
+    #Testうまくいった____画像ダウンロード＿＿＿＿
+    def list_url(self):
         for links in self.get_soup().find_all('img'):
-            time.sleep(1) #１秒ウェイトを挟む
-            self.set_link([links.get('src')])
-            print(self.__link)
+            self.set_link(links['src'])
+            print(self.get_link())
+            self.set_response(requests.get(self.get_link()).content)
+            filename = "image/"
+            files = glob.glob(filename + '/*')
+            # now = time.time()
+            # date = time.ctime(now)
+            # os.mkdir('image/' + date)
+            i=0
+            with open(filename + os.path.basename(self.get_link()), "wb")as file:
+                    i+=1
+                    file.write(self.get_response())
+                    #os.rename(file, os.path.join(filename,'{0}:img_' + os.path.basename(file)).format(i))
+                    time.sleep(2)
+
+    def file_check(self, file):
+        for x in os.listdir(file):
+            if cmp(os.path.basename(file), os.listdir()):
+                print('ファイルが重複しています')
+                yield x
+
+    def get_filer(self):
+        return self.__filer
+
+    def set_filer(self, filer):
+        self.__filer = filer
+    #get_response
+    def get_response(self):
+        return self.__response
+    #set_response
+    def set_response(self, response):
+        self.__response = response
+
 
     #後々List型にしよう
     #URL保持
