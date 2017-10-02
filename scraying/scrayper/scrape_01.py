@@ -132,6 +132,7 @@ class Scrape:
     #         self.__link = [links.get('src')]
     #         print(self.__link)
     #Testうまくいった____画像ダウンロード＿＿＿＿
+
     def list_url(self):
         for links in self.get_soup().find_all('img'):
             self.set_link(links['src'])
@@ -144,7 +145,7 @@ class Scrape:
             # os.mkdir('image/' + date)
             i=0
             with open(filename + os.path.basename(self.get_link()), "wb")as file:
-                    i+=1
+                    i += 1
                     file.write(self.get_response())
                     #os.rename(file, os.path.join(filename,'{0}:img_' + os.path.basename(file)).format(i))
                     time.sleep(2)
