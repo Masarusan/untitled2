@@ -8,6 +8,8 @@ import sys
 import time
 import os.path
 import glob
+from datetime import date
+from datetime import datetime
 from filecmp import cmp
 
 
@@ -18,6 +20,7 @@ class Scrape:
         self.__url = url
         self.__soup = soup
         self.__response = response
+        self.__link = ""
         self.http_ok(self.__url)
 
 
@@ -55,7 +58,7 @@ class Scrape:
         while True:
             try:
                 s = requests.Session()
-                self.set_response(s.get(url, timeout=5))
+                self.set_response(s.get(url, timeout=5, allow_redirects=False, stream=True))
                 if self.get_response().status_code != requests.codes.ok:
                     sys.stdout.write('Error:')
                     sys.stdout.write('Status_Code:{}'.format(self.get_response().status_code))
@@ -66,9 +69,8 @@ class Scrape:
                     print('Accesetime:{}'.format(self.get_response().elapsed.total_seconds()))
                     self.set_soup(BeautifulSoup(self.get_response().content, 'html.parser'))
                     print('BS4_Original_encoding:{}'.format(self.get_soup().original_encoding))
-                    self.__list = [[a] for a in self.get_soup().find_all(['img', 'src'])]
+                    #self.__list = [[p] for p in self.get_soup().find_all(['img', 'src'])]
 
-                        #print(i, ':', a.get('src'), a.text)
                     return self.list_url()
 
 
@@ -123,38 +125,46 @@ class Scrape:
     #取得した画像リンクを格納
     def set_link(self, link):
         self.__link = link
-    #
-    # #soupからタグimg,srcを抽出
-    # def list_img(self):
-    #     self.__link = [[]]
-    #     for links in self.get_soup().find_all('img'):
-    #         #time.sleep(1) #１秒ウェイトを挟む
-    #         self.__link = [links.get('src')]
-    #         print(self.__link)
     #Testうまくいった____画像ダウンロード＿＿＿＿
 
     def list_url(self):
+        p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
+        now = datetime.today()
+        str = now.strftime("%Y-%m-%d %H:%M/")  # 保存日付
+        filename = "image/"
+        path = filename + str
+        os.mkdir(path)
+        files = glob.glob(filename + '/*')  # ディレクトリ
+        os.chdir(path)
         for links in self.get_soup().find_all('img'):
             self.set_link(links['src'])
             print(self.get_link())
-            self.set_response(requests.get(self.get_link()).content)
-            filename = "image/"
-            files = glob.glob(filename + '/*')
-            # now = time.time()
-            # date = time.ctime(now)
-            # os.mkdir('image/' + date)
-            i=0
-            with open(filename + os.path.basename(self.get_link()), "wb")as file:
-                    i += 1
-                    file.write(self.get_response())
-                    #os.rename(file, os.path.join(filename,'{0}:img_' + os.path.basename(file)).format(i))
+            if p.match(self.get_link()):
+                with open(os.path.basename(self.get_link()), "wb")as f:
+                    self.set_response(requests.get(self.get_link()).content)
+                    linkUrl = "http:" + self.get_link()
+                    self.set_link(linkUrl)
+                    f.write(self.get_response())
                     time.sleep(2)
+            else:
+                pass
 
-    def file_check(self, file):
-        for x in os.listdir(file):
-            if cmp(os.path.basename(file), os.listdir()):
-                print('ファイルが重複しています')
-                yield x
+            return print("Finished")
+    #ディレクトリ作成、日時指定
+    def file_check(self, filename):
+        if not os.path.exists(filename):
+            try:
+                os.mkdir(filename)
+                os.chdir(filename)
+                if not os.path.isfile(filename):
+                    return True
+            except FileExistsError as e:
+                print(e.errno)
+                print(e.filename)
+                sys.exit(1)
+        else:
+            print("Error")
+
 
     def get_filer(self):
         return self.__filer
@@ -201,3 +211,9 @@ class Scrape:
     #file
     def set_file(self, file):
         self.__file = file
+
+    def get_linkurl(self):
+        return self.__linkurl
+
+    def set_linkurl(self, linkurl):
+        self.__linkurl = linkurl
