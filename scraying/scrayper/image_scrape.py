@@ -9,7 +9,7 @@ class image_scrape():
         
     def image_download(self, link=[[]]):
 
-        url = ['http://xxeronetxx.info/img/20170906/v1-074.html']
+        url = ['']
         for i in link:
             res = requests.get(i).content
             filename = "image/"
@@ -19,10 +19,12 @@ class image_scrape():
                 time.sleep(1)
 
 if __name__ == "__main__":
-    ig = image_scrape()
-    sc = Scrape(url ="http://xxeronetxx.info/img/20170906/v1-074.html")
+    #ig = image_scrape()
+    #sc = Scrape(url =")
+    sc = Scrape()
     #ig.image_download(sc.get_link())
     # for i in sc.get_link():
     #     print(i)
     #print(sc.get_link())
     #print(sc.list_url())
+    print(sc.file_check('image'))

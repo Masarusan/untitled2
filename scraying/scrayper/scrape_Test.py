@@ -6,14 +6,14 @@ import time
 
 
 if __name__ == "__main__":
-    #sc = Scrape(url="/Users/masaru/gihyo.jp/dp/index.html")
-    #sc = Scrape(url='http://xxeronetxx.info/img/20170906/v1-074.html')
+    #sc = Scrape(url="")
+    #sc = Scrape(url='')
     #sc = Scrape(url='http://httpbin.org/status/503,200,403')
     #sc.scrape()
     #sc.list_img()
-    #sc = Scrape(url='/Users/masaru/gihyo.jp/dp/index.html')
+    #sc = Scrape(url='')
     #sc.file_open(url="")
-    #sc.list_img(sc.file_open("/Users/masaru/gihyo.jp/dp/index.html"))
+    #sc.list_img(sc.file_open(""))
     #'http://xxeronetxx.info/'
     # retries = 3
     # retries+=1
@@ -27,8 +27,18 @@ if __name__ == "__main__":
     #     time.sleep(1)
     #print("Test"+ sc.get_link()[0])
     #sc.downloading()
-    sc = Scrape(url="http://xxeronetxx.info/img/20170906/v1-074.html")
+    #sc = Scrape(url="")
+    #sc = Scrape(url="")
     #print(sc.download(type(sc.get_link())))
-    print(type(sc.get_link()))
-    type(sc.get_link())
-    print(sc.get_list())
+    #print(type(sc.get_link()))
+    #type(sc.get_link())
+    #print(sc.file_check('image'))
+    #print(sc.get_link())
+    #print(type(sc.get_link()))
+    #print(sc.get_linkurl())
+    #print(sc.get_link())
+    sc = Scrape()
+    sc.file_check("image/")
+
+
+
