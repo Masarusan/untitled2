@@ -6,7 +6,7 @@
 *.swp
 *.jpg
 .DS_Store
-untitled2/scraying/scrayper/
+untitled2/scraying/scrayper/*
 !Csv_checker.py
 !scrape_01.py
 !image_scrape.py
