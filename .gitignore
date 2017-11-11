@@ -6,7 +6,6 @@
 #*.swp
 *.jpg
 .DS_Store
-untitled2/
 !Csv_checker.py
 !scrape_01.py
 !image_scrape.py
