@@ -186,6 +186,11 @@ class Scrape:
                 sys.exit(1)
         else:
             print("Not Directory")
+    #httpパターン
+
+    def get_httppattern(self):
+        self.httppattern = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
+        return self.__httppattern
 
     #5chスレッド取得メソッド
     def get_5ch(self):
@@ -193,13 +198,13 @@ class Scrape:
         for i in self.get_link():
             print(i)
 
-
     def get_filer(self):
         return self.__filer
 
     def set_filer(self, filer):
         self.__filer = filer
     #get_response
+
     def get_response(self):
         return self.__response
     #set_response
