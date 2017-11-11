@@ -8,14 +8,13 @@ import sys
 import time
 import os.path
 import glob
-from datetime import date
 from datetime import datetime
-from filecmp import cmp
-
+import cchardet
+from Csv_checker import Csv_Checker
 
 class Scrape:
     #初期化
-    def __init__(self, list=[[]], url='', soup='', response=""):
+    def __init__(self, list=[[]], url=[''], soup='', response=""):
         self.__list = list
         self.__url = url
         self.__soup = soup
@@ -23,67 +22,83 @@ class Scrape:
         self.__link = ""
         self.http_ok(self.__url)
 
-
     #httpの入力判定
     def http_ok(self, url):
-        #url = self.get_url()
-        p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')#http正規表現
-        root, ext = os.path.splitext(url)
-        if p.match(url):#httpの場合実行
-            print('HTTP_PATTERN_OK')
-            print('URL:{}'.format(self.get_url()))
-            return self.scrape(url)
-        elif ext == ".html":
-            print("ローカルディレクトリからファイルを取得")
-            try:
-                self.file_open(self.get_url())
-                #raise FileNotFoundError('TestError')
-            except FileNotFoundError as a:
-                print("ファイルが見つかりませんでした")
-                print("FileNotFound:{0}".format(a))
-                #raise
-        elif ext == ".csv":
-            pass
+        for urls in url:
+            p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')#http(s)正規表現
+            root, ext = os.path.splitext(urls)
+            if p.match(urls):#http(s)の場合実行
+                print('HTTP_PATTERN_OK')
+                print('URL:{0}'.format(urls))
+                time.sleep(1)
+                self.scrape(urls)
+            elif ext is ".html":
+                print("ローカルディレクトリからファイルを取得")
+                try:
+                    self.file_open(self.get_url())
+                    #raise FileNotFoundError('TestError')
+                except FileNotFoundError as a:
+                    print("ファイルが見つかりませんでした")
+                    print("FileNotFound:{0}".format(a))
+                    #raise
+            elif ext in ".csv":
+                print("CSV_file")
+                csv_file = Csv_Checker(urls)
+                csv_file.csv_dict(urls)
+                pass
 
-        else:
-            print('Error')
-            sys.exit()
+            else:
+                print('Error')
+                sys.exit()
 
     # スクレイピングメソッド
     def scrape(self, url):
         #http = session.get(self.get_url(), timeout=1)
-        max_retries = 3
+        MAX_RETRIES = 3
         retries = 0
         std = ''
         while True:
             try:
                 s = requests.Session()
-                self.set_response(s.get(url, timeout=5, allow_redirects=False, stream=True))
+                header = {'User-Agent' : 'Plactice_Browser/0.01'}
+                self.set_response(s.get(url, timeout=0.01, allow_redirects=False, stream=True, headers=header))
+                ccencode = cchardet.detect(self.get_response().content)["encoding"]#エンコード判定
+                self.__response.encoding = ccencode
                 if self.get_response().status_code != requests.codes.ok:
                     sys.stdout.write('Error:')
-                    sys.stdout.write('Status_Code:{}'.format(self.get_response().status_code))
+                    sys.stdout.write('Status_Code:{0}'.format(self.get_response().status_code))
+                    return False
                 else:
                     print('Success!')
-                    print('HTTP_STATUS_CODE:{}'.format(self.get_response().status_code))
-                    print('Encoding:{}'.format(self.get_response().encoding))
-                    print('Accesetime:{}'.format(self.get_response().elapsed.total_seconds()))
+                    print('HTTP_STATUS_CODE:{0}'.format(self.get_response().status_code))
+                    print('Encoding:{0}'.format(self.get_response().encoding))
+                    print('Accesetime:{0}'.format(self.get_response().elapsed.total_seconds()))
                     self.set_soup(BeautifulSoup(self.get_response().content, 'html.parser'))
-                    print('BS4_Original_encoding:{}'.format(self.get_soup().original_encoding))
+                    print('BS4_Original_encoding:{0}'.format(self.get_soup().original_encoding))
                     #self.__list = [[p] for p in self.get_soup().find_all(['img', 'src'])]
-
-                    return self.list_url()
+                    #self.list_url()
+                    jpeg = re.compile(".jpg")
+                    jpg = ".jpg"
+                    #self.__list = [p for p in self.get_soup().find_all(['img', 'src'], string=True) if jpeg.match(str(p))]
+                    #return True
+                    for p in self.get_soup().find_all('img', src = re.compile(".jpg")):
+                        self.set_link(p["src"])
+                        print(self.get_link())
+                    return
 
 
             except requests.exceptions.RequestException as ex:
                 #ネットワークレベルのエラー
                 print('Exception occured:{0}'.format(ex))
             retries+=1
-            if retries >= max_retries:
+            if retries >= MAX_RETRIES:
                 raise Exception('Too many retries.')#リトライ回数の上限を超えた時例外発生
 
             wait = 2**(retries-1)
             std += '.'
             sys.stdout.write('\rReConeccting %d seconds%s' % (wait,std))
+            #print("\rReConnectiong {0}seconds{1}".format(wait, std),end='')
+            #print()
             sys.stdout.flush()
             time.sleep(wait)#ウェイト
 
@@ -97,6 +112,7 @@ class Scrape:
 
             detector.close()
             print(detector.result)
+            print(detector.result['encoding'], end='')
         return
 
     #ファイルをオープン
@@ -130,13 +146,14 @@ class Scrape:
     def list_url(self):
         p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
         now = datetime.today()
-        str = now.strftime("%Y-%m-%d %H:%M/")  # 保存日付
+        file_time = now.strftime("%Y-%m-%d %H:%M/")  # 保存日付
         filename = "image/"
-        path = filename + str
+        path = filename + file_time
         os.mkdir(path)
         files = glob.glob(filename + '/*')  # ディレクトリ
+        #self.file_check()
         os.chdir(path)
-        for links in self.get_soup().find_all('img'):
+        for links in self.get_soup().find_all('img', src = re.compile(".jpg")):
             self.set_link(links['src'])
             print(self.get_link())
             if p.match(self.get_link()):
@@ -149,21 +166,31 @@ class Scrape:
             else:
                 pass
 
-            return print("Finished")
+        return print("Finished")
+
     #ディレクトリ作成、日時指定
-    def file_check(self, filename):
-        if not os.path.exists(filename):
+    def file_check(self):
+        now = datetime.today()
+        file_directory = now.strftime("image/%Y-%m-%d %H:%M/")#保存日付
+        if not os.path.exists(file_directory):#ディレクトリ、ファイルが存在しない場合ディレクトリを作成
             try:
-                os.mkdir(filename)
-                os.chdir(filename)
-                if not os.path.isfile(filename):
-                    return True
+                os.mkdir(file_directory)
+                os.chdir(file_directory)
+                if not os.path.isfile(file_directory):
+                    return file_directory
+                    pass
             except FileExistsError as e:
                 print(e.errno)
                 print(e.filename)
                 sys.exit(1)
         else:
-            print("Error")
+            print("Not Directory")
+
+    #5chスレッド取得メソッド
+    def get_5ch(self):
+        self.__link = self.__soup.find_all('div', class_='message')
+        for i in self.get_link():
+            print(i)
 
 
     def get_filer(self):
@@ -177,7 +204,6 @@ class Scrape:
     #set_response
     def set_response(self, response):
         self.__response = response
-
 
     #後々List型にしよう
     #URL保持
@@ -193,7 +219,7 @@ class Scrape:
         return self.__list
 
     #リストのsetter
-    def set_list(self):
+    def set_list(self, list):
         self.__list = list
 
     #html content get
