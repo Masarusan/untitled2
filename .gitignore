@@ -3,11 +3,7 @@
 ### Example user template
 
 # IntelliJ project files
-/*.jpg
-/untitled2/*
-!/untitled2/scraying/
-/untitled2/scraying/*
-!/untitled2/scraying/scrayper/
+
 !Csv_checker.py
 !scrape_01.py
 !image_scrape.py
