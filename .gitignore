@@ -3,16 +3,12 @@
 ### Example user template
 
 # IntelliJ project files
-.idea
-*.iml
-out
-gen
+*jpg
 /untitled2/*
 !/untitled2/scraying/
 /untitled2/scraying/*
-!/untitled2/scraying/scrayper/
-/untitled2/scraying/scrayper/*
-!/Csv_checker.py
-!/scrape_01.py
-!/image_scrape.py
-!/scrape_Test.py
+!/untitled2/scraying/scrayper/.gitkeep
+!Csv_checker.py
+!scrape_01.py
+!image_scrape.py
+!scrape_Test.py
