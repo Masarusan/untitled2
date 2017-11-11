@@ -3,6 +3,9 @@
 ### Example user template
 
 # IntelliJ project files
+*.swp
+*.jpg
+.DS_Store
 untitled2/scraying/scrayper/
 !Csv_checker.py
 !scrape_01.py
