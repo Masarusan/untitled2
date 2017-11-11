@@ -102,6 +102,7 @@ class Scrape:
             sys.stdout.flush()
             time.sleep(wait)#ウェイト
 
+    #使わない
     @staticmethod
     def encode_decision(self, soup):
         detector = UniversalDetector()
