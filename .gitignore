@@ -4,7 +4,7 @@
 
 # IntelliJ project files
 untitled2/scraying/scrayper/*
-!Csv_checker.py
-!scrape_01.py
-!image_scrape.py
-!scrape_Test.py
+Csv_checker.py
+scrape_01.py
+image_scrape.py
+scrape_Test.py
