@@ -1,6 +1,0 @@
-f = open("Sample.txt" , "r" ,encoding="utf_8")
-lines = f.read(2)
-print(lines)
-lines = f.read(2)
-print(lines)
-f.close()
