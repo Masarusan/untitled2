@@ -4,10 +4,3 @@
 
 # IntelliJ project files
 untitled2/scraying/scrayper/image/
-#!Csv_checker.py
-#!scrape_01.py
-#!image_scrape.py
-#!scrape_Test.py
-#*.swp
-*.jpg
-.DS_Store
