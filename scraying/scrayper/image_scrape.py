@@ -19,4 +19,6 @@ class image_scrape():
                 time.sleep(1)
 
 if __name__ == "__main__":
-    sc = Scrape(url=["/Users/masaru/Downloads/Empyrion共有翻訳所Part2 - PDA翻訳作業用シート .csv"])
+    #sc = Scrape(url=["/Users/masaru/Downloads/Empyrion共有翻訳所Part2 - PDA翻訳作業用シート .csv"])
+    #sc = Scrape(url=["http://www.e-stat.go.jp/SG1/estat/List.do?bid=000001034991"])
+    sc = Scrape(url=['/Users/masaru/gihyo.jp/dp/index.html','/Users/masaru/html_Filer/jisakutech.html'])

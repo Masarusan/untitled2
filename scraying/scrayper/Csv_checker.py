@@ -5,9 +5,10 @@ import csv
 class Csv_Checker:
     def __init__(self, csv_file=['']):
         self.__csv_file = csv_file
-        self.csv_encode(self.__csv_file)
+        self.csv_Viewer(self.__csv_file)
 
-    def csv_encode(self,csv_file):
+    #標準出力で表示(デフォルトのライブラリ使用)
+    def csv_Viewer(self,csv_file):
         with open(csv_file, 'r')as f:
             reader = csv.reader(f)
             header = next(reader)

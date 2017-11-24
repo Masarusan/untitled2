@@ -25,27 +25,27 @@ class Scrape:
     #httpの入力判定
     def http_ok(self, url):
         for urls in url:
-            p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')#http(s)正規表現
+            #p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')#http(s)正規表現
             root, ext = os.path.splitext(urls)
-            if p.match(urls):#http(s)の場合実行
+            if self.get_httppattern().match(urls):#http(s)の場合実行
                 print('HTTP_PATTERN_OK')
-                print('URL:{0}'.format(urls))
+                print('URL:{0}'.format(urls))#urlsから取得
                 time.sleep(1)
                 self.scrape(urls)
-            elif ext is ".html":
+            elif ext in ".html":#ファイルの場合そのまま読み取る
                 print("ローカルディレクトリからファイルを取得")
                 try:
-                    self.file_open(self.get_url())
+                    #self.file_open(self.get_url())
+                    self.directory_htmlfile(urls)
                     #raise FileNotFoundError('TestError')
                 except FileNotFoundError as a:
                     print("ファイルが見つかりませんでした")
                     print("FileNotFound:{0}".format(a))
                     #raise
-            elif ext in ".csv":
+            elif ext in ".csv":#Csvファイル読み取り
                 print("CSV_file")
                 csv_file = Csv_Checker(urls)
-                csv_file.csv_dict(urls)
-                pass
+                #csv_file.csv_dict(urls)
 
             else:
                 print('Error')
@@ -61,7 +61,7 @@ class Scrape:
             try:
                 s = requests.Session()
                 header = {'User-Agent' : 'Plactice_Browser/0.01'}
-                self.set_response(s.get(url, timeout=0.01, allow_redirects=False, stream=True, headers=header))
+                self.set_response(s.get(url, timeout=8, allow_redirects=False, stream=True, headers=header))
                 ccencode = cchardet.detect(self.get_response().content)["encoding"]#エンコード判定
                 self.__response.encoding = ccencode
                 if self.get_response().status_code != requests.codes.ok:
@@ -76,14 +76,15 @@ class Scrape:
                     self.set_soup(BeautifulSoup(self.get_response().content, 'html.parser'))
                     print('BS4_Original_encoding:{0}'.format(self.get_soup().original_encoding))
                     #self.__list = [[p] for p in self.get_soup().find_all(['img', 'src'])]
-                    #self.list_url()
                     jpeg = re.compile(".jpg")
                     jpg = ".jpg"
                     #self.__list = [p for p in self.get_soup().find_all(['img', 'src'], string=True) if jpeg.match(str(p))]
                     #return True
-                    for p in self.get_soup().find_all('img', src = re.compile(".jpg")):
-                        self.set_link(p["src"])
-                        print(self.get_link())
+                    #for p in self.get_soup().find_all('img', src = re.compile(".jpg")):
+                        #self.set_link(p["src"])
+                        #print(self.get_link())
+                    self.csv_get(self.get_soup())
+
                     return
 
 
@@ -96,11 +97,19 @@ class Scrape:
 
             wait = 2**(retries-1)
             std += '.'
-            sys.stdout.write('\rReConeccting %d seconds%s' % (wait,std))
+            #sys.stdout.write('\rReConeccting %d seconds%s' % (wait,std))
             #print("\rReConnectiong {0}seconds{1}".format(wait, std),end='')
             #print()
             sys.stdout.flush()
             time.sleep(wait)#ウェイト
+
+    #パース保持、自動整形してsoupに格納
+    #ファイルを展開
+    def directory_htmlfile(self, content):
+        with open(content, 'rb')as f:
+            parser = BeautifulSoup(f, 'html.parser')
+            print(parser)
+            return parser
 
     #使わない
     @staticmethod
@@ -116,11 +125,6 @@ class Scrape:
             print(detector.result['encoding'], end='')
         return
 
-    #ファイルをオープン
-    def file_open(self, open_files):
-        with open(open_files, "r", encoding="utf-8")as f:
-            for i, line in enumerate(f):
-                print("{:4d}:{}".format(i + 1, line.strip("\n")))
 
     #画像ファイル名を決定
     def save_filename(self):
@@ -145,7 +149,7 @@ class Scrape:
     #Testうまくいった____画像ダウンロード＿＿＿＿
 
     def list_url(self):
-        p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
+        #p = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
         now = datetime.today()
         file_time = now.strftime("%Y-%m-%d %H:%M/")  # 保存日付
         filename = "image/"
@@ -157,7 +161,7 @@ class Scrape:
         for links in self.get_soup().find_all('img', src = re.compile(".jpg")):
             self.set_link(links['src'])
             print(self.get_link())
-            if p.match(self.get_link()):
+            if self.get_httppattern().match(self.get_link()):
                 with open(os.path.basename(self.get_link()), "wb")as f:
                     self.set_response(requests.get(self.get_link()).content)
                     linkUrl = "http:" + self.get_link()
@@ -168,6 +172,12 @@ class Scrape:
                 pass
 
         return print("Finished")
+    # ファイルをオープン
+
+    def file_open(self, open_files):
+        with open(open_files, "r", encoding="utf-8")as f:
+            for i, line in enumerate(f):
+                print("{:4d}:{}".format(i + 1, line.strip("\n")))
 
     #ディレクトリ作成、日時指定
     def file_check(self):
@@ -186,10 +196,23 @@ class Scrape:
                 sys.exit(1)
         else:
             print("Not Directory")
+
+    #e-Stat人口統計
+    def csv_get(self, soup):
+        tmp_csv =  self.get_url()[0].rstrip('List.do?bid=000001034991')
+        tmp_csvfile = './Csvdl.do?sinfid=000012460662'.lstrip('./')
+        tmp_csv +=tmp_csvfile
+        print(tmp_csv)
+        print(type(tmp_csv))
+        for csv in soup.find_all('a'):
+            csv_file = csv.get('href')
+            print(csv)
+        pass
+
     #httpパターン
 
     def get_httppattern(self):
-        self.httppattern = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
+        self.__httppattern = re.compile('(https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+)')
         return self.__httppattern
 
     #5chスレッド取得メソッド
