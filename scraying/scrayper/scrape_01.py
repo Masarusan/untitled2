@@ -12,6 +12,7 @@ from datetime import datetime
 import cchardet
 from Csv_checker import Csv_Checker
 
+
 class Scrape:
     #初期化
     def __init__(self, list=[[]], url=[''], soup='', response=""):
@@ -59,9 +60,11 @@ class Scrape:
         std = ''
         while True:
             try:
+
                 s = requests.Session()
+                #s.cert = 'Let\'s Encrypt Authority X3.txt'
                 header = {'User-Agent' : 'Plactice_Browser/0.01'}
-                self.set_response(s.get(url, timeout=8, allow_redirects=False, stream=True, headers=header))
+                self.set_response(s.get(url, timeout=8, allow_redirects=False, stream=True, headers=header,verify=False))
                 ccencode = cchardet.detect(self.get_response().content)["encoding"]#エンコード判定
                 self.__response.encoding = ccencode
                 if self.get_response().status_code != requests.codes.ok:
@@ -107,9 +110,9 @@ class Scrape:
     #ファイルを展開
     def directory_htmlfile(self, content):
         with open(content, 'rb')as f:
-            parser = BeautifulSoup(f, 'html.parser')
-            print(parser)
-            return parser
+            self.__parser = BeautifulSoup(f, 'html.parser')
+            print(self.__parser)
+            return self.__parser
 
     #使わない
     @staticmethod
@@ -272,3 +275,6 @@ class Scrape:
 
     def set_linkurl(self, linkurl):
         self.__linkurl = linkurl
+
+    def get_parser(self):
+        return self.__parser
