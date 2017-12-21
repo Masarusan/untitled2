@@ -8,7 +8,7 @@ from scrape_01 import Scrape
 class scraype_gui(Scrape):
 
     def __init__(self):
-        super(scraype_gui, self).__init__(url=['https://momon-ga.com/archives/60552468.html'])
+        super(scraype_gui, self).__init__(url=[''])
 
     def main(self):
         root = tk.Tk()
